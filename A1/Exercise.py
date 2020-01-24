@@ -11,6 +11,7 @@ import pandas as pd
 import scipy.sparse
 import sklearn.decomposition
 import math
+import pickle
 from collections import defaultdict
 
 
@@ -50,11 +51,14 @@ WORDS.update(set(rg65.word2))
 # Mapping between word and integer
 word_to_int = {}
 int_to_word = {}
-for ix, w in enumerate(WORDS):
+for ix, w in enumerate(sorted(list(WORDS))):
   word_to_int[w] = ix
   int_to_word[ix] = w
 
 
+# ## How frequent are the RG65 words?
+for w in set(rg65.word1.tolist() + rg65.word2.tolist()):
+  print(w, fdist[w])
 # ## Step 3: construct word-context matrix
 
 # In[7]:
@@ -89,13 +93,13 @@ for r, c in zip(rs, cs):
 
 
 NDIM = 300
-svd = sklearn.decomposition.TruncatedSVD(n_components=NDIM)
+svd = sklearn.decomposition.TruncatedSVD(n_components=NDIM, random_state=12345)
 M2 = svd.fit_transform(M1P)
 
 
 # ## Step 7: calculate cosine similarity
 
-# In[10]:
+# In[13]:
 
 
 # Change this to specify which matrix to use
@@ -104,6 +108,11 @@ MTX = M2
 def get_cosine_similarity(row):
   w1_ix = word_to_int[row['word1']]
   w2_ix = word_to_int[row['word2']]
+  
+  # Discard ones that occur in less than 3 bigrams
+  if M1[w1_ix].sum() <= 2 or M1[w2_ix].sum() <= 2:
+    return None
+  
   if scipy.sparse.issparse(MTX):
     return 1 - scipy.spatial.distance.cosine(MTX[w1_ix].todense(), MTX[w2_ix].todense())
   else:
@@ -115,15 +124,26 @@ rg65['lsa_similarity'] = rg65.apply(get_cosine_similarity, axis=1)
 # ## Step 8: Pearson correlation
 # 
 # Results:
-# * M1: 0.18843707487131614
-# * M1P: 0.25304737754013334
-# * M2_10: 0.12782440083163005
-# * M2_100: 0.26414633121917536
-# * M2_300: 0.2114424139298711
+# ```
+# M1: 0.21639005014068902
+# M1P: 0.41548942500838
+# M2_10: 0.1333050985847491
+# M2_100: 0.329345887621373
+# M2_300: 0.41080191606630956
+# ```
 
-# In[11]:
+# In[14]:
 
 
 rg_notnull = rg65.dropna()
 scipy.stats.pearsonr(rg_notnull.similarity, rg_notnull.lsa_similarity)
+
+
+# ## Serialize vectors
+
+# In[15]:
+
+
+with open('lsa-exercise.pkl', 'wb') as f:
+  pickle.dump({'WORDS': WORDS, 'M2': M2}, f)
 
