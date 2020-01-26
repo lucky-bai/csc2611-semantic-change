@@ -84,8 +84,8 @@ print('Pearson correlation:', scipy.stats.pearsonr(rg65.similarity, rg65.w2v_sim
 # In[9]:
 
 
-# Read words
-with open('word-test.v1.txt') as f:
+# Replace with word-test-{all,semantic,syntactic}.txt
+with open('word-test-all.txt') as f:
   lines = f.read().split('\n')
 
 
@@ -107,11 +107,13 @@ for line in lines:
 # In[11]:
 
 
-def w2v_get_nearest(v):
+def w2v_get_nearest(v, exclude):
   best_cosine_distance = 1000
   best_word = None
   for w in WORDS:
     if w not in model.vocab:
+      continue
+    if w in exclude:
       continue
     d = scipy.spatial.distance.cosine(v, model[w])
     if d < best_cosine_distance:
@@ -121,7 +123,7 @@ def w2v_get_nearest(v):
 
 def w2v_process_analogy(inp):
   w1, w2, w3, w4 = inp
-  return w2v_get_nearest(model[w3] + model[w2] - model[w1])
+  return w2v_get_nearest(model[w3] + model[w2] - model[w1], [w1, w2, w3])
 
 # multi-threading to speed it up
 with mp.Pool() as pool:
@@ -136,22 +138,24 @@ print('Correct:', w2v_correct, '/', len(analogy_words))
 
 # ## Evaluate LSA
 
-# In[ ]:
+# In[12]:
 
 
-def lsa_get_nearest(v):
+def lsa_get_nearest(v, exclude):
   best_cosine_distance = 1000
   best_word = None
   for w in WORDS:
+    if w in exclude:
+      continue
     d = scipy.spatial.distance.cosine(v, M2[word_to_int[w]])
-    if d < best_cosine_distance:
+    if d > 0 and d < best_cosine_distance:
       best_cosine_distance = d
       best_word = w
   return best_word
 
 def lsa_process_analogy(inp):
   w1, w2, w3, w4 = inp
-  return lsa_get_nearest(model[w3] + model[w2] - model[w1])
+  return lsa_get_nearest(M2[word_to_int[w3]] + M2[word_to_int[w2]] - M2[word_to_int[w1]], [w1, w2, w3])
 
 # multi-threading to speed it up
 with mp.Pool() as pool:
