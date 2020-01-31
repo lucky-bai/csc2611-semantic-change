@@ -6,11 +6,18 @@
 # In[1]:
 
 
-import pandas as pd
-import scipy.spatial.distance
-import scipy.stats
+import multiprocessing as mp
 import pickle
 import math
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import scipy.spatial.distance
+import scipy.stats
+import tqdm
+
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 
 # ## Load data
@@ -90,4 +97,76 @@ def get_pearson(distance_fn1, distance_fn2):
 print(get_pearson(method_FIRST, method_MAX))
 print(get_pearson(method_FIRST, method_SUM))
 print(get_pearson(method_MAX, method_SUM))
+
+
+# ## Step 3: compare with ground truth
+# 
+# Take ground truth as the overlap between the 100 closest words in 1900 and 1990.
+
+# In[7]:
+
+
+def get_nearest_neighbors(year_ix, word_ix, N=100):
+  L = []
+  for ix in range(2000):
+    dist = scipy.spatial.distance.cosine(
+      embeddings[word_ix][year_ix],
+      embeddings[ix][year_ix]
+    )
+    L.append((words[ix], dist))
+  return sorted(L, key=lambda x: x[1])[:N]
+
+def overlap(L1, L2):
+  S1 = set([x[0] for x in L1])
+  S2 = set([x[0] for x in L2])
+  return len(S1.intersection(S2))
+  
+def get_ground_truth(w_ix):
+  L1 = get_nearest_neighbors(0, w_ix, N=25)
+  L2 = get_nearest_neighbors(9, w_ix, N=25)
+  return 1 - overlap(L1, L2) / 25
+
+pool = mp.Pool()
+G = pool.map(get_ground_truth, range(2000))
+
+
+# In[8]:
+
+
+# Calculate pearson
+def ground_truth_distance_fn(w_ix):
+  return G[w_ix]
+
+print(get_pearson(ground_truth_distance_fn, method_FIRST))
+print(get_pearson(ground_truth_distance_fn, method_MAX))
+print(get_pearson(ground_truth_distance_fn, method_SUM))
+
+
+# ## Step 4: Change point detection
+# 
+# Most changed words: objectives, computer, programs
+
+# In[25]:
+
+
+WORD = 'objectives'
+w_ix = words.index(WORD)
+
+decade_changes = []
+for t_ix in range(9):
+  decade_changes.append(
+    scipy.spatial.distance.cosine(embeddings[w_ix][t_ix], embeddings[w_ix][t_ix+1])
+  )
+
+plt.bar(years[:-1], decade_changes)
+plt.xlabel('Decade')
+plt.ylabel('Semantic Change')
+plt.title('Semantic change for word: ' + WORD)
+plt.show()
+
+
+# In[30]:
+
+
+get_nearest_neighbors(0, w_ix, N=20)
 
