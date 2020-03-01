@@ -10,9 +10,18 @@
 # In[1]:
 
 
+import sys
+sys.path.append('../')
+
 from collections import defaultdict
 import numpy as np
 import pandas as pd
+import glob
+
+import src.ud_corpus
+
+get_ipython().run_line_magic('load_ext', 'autoreload')
+get_ipython().run_line_magic('autoreload', '2')
 
 
 # In[2]:
@@ -46,4 +55,24 @@ for ch, ratings in D.items():
   }))
 concreteness_df = pd.DataFrame(concreteness_df)
 concreteness_df.head()
+
+
+# ## Load UD Kyoto corpus
+
+# In[5]:
+
+
+ud_data = src.ud_corpus.POSCorpus.create_from_ud(glob.glob('../data/UD_Classical_Chinese-Kyoto/*.conllu'))
+
+
+# In[6]:
+
+
+ud_data.sentences[0]
+
+
+# In[7]:
+
+
+ud_data.get_nv_stats().sort_values('total_count', ascending=False).head(10)
 
