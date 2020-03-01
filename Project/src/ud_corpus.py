@@ -2,6 +2,7 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import conllu
+import chinese_converter
 
 
 class POSCorpus(object):
@@ -34,8 +35,10 @@ class POSCorpus(object):
         for token in token_list:
           pos = token['upostag']
           word = token['form']
+          # Assume words are monosyllabic so split up multisyllabic words
+          # Also convert to simplified characters
           for char in word:
-            sentence.append({'char': char, 'pos': pos})
+            sentence.append({'char': chinese_converter.to_simplified(char), 'pos': pos})
         if len(sentence) > 0:
           corpus.sentences.append(sentence)
 

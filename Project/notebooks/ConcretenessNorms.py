@@ -17,6 +17,9 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 import glob
+import matplotlib.pyplot as plt
+import seaborn as sns
+import scipy.stats
 
 import src.ud_corpus
 
@@ -49,7 +52,7 @@ for ix, row in yao2017.iterrows():
 concreteness_df = []
 for ch, ratings in D.items():
   concreteness_df.append(pd.Series({
-    'character': ch,
+    'char': ch,
     'compounds': len(ratings),
     'concreteness': np.mean(np.array(ratings))
   }))
@@ -74,5 +77,27 @@ ud_data.sentences[0]
 # In[7]:
 
 
-ud_data.get_nv_stats().sort_values('total_count', ascending=False).head(10)
+summary_data = ud_data.get_nv_stats().sort_values('total_count', ascending=False)
+summary_data = summary_data[summary_data.total_count >= 10]
+summary_data.head(10)
+
+
+# ## Join together noun_ratio and concreteness
+
+# In[8]:
+
+
+combined_df = pd.merge(summary_data, concreteness_df, how='inner', on='char')
+
+
+# In[9]:
+
+
+sns.regplot(combined_df.noun_ratio, combined_df.concreteness)
+
+
+# In[10]:
+
+
+scipy.stats.pearsonr(combined_df.noun_ratio, combined_df.concreteness)
 
