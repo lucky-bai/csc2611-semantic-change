@@ -10,3 +10,7 @@ all_24hist_spaces.txt
 
 # git clone https://github.com/UniversalDependencies/UD_Classical_Chinese-Kyoto
 UD_Classical_Chinese-Kyoto/
+
+# 300d GloVe character embeddings
+glove/classical-chinese/
+glove/modern-chinese/
