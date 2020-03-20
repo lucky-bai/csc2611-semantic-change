@@ -100,10 +100,26 @@ summary_data.sort_values("semantic_change").head(15)
 
 
 sns.regplot(summary_data.noun_ratio, summary_data.semantic_change)
+plt.ylabel('Semantic change')
+plt.xlabel('Noun ratio')
 
 
 # In[13]:
 
 
 scipy.stats.pearsonr(summary_data.noun_ratio, summary_data.semantic_change)
+
+
+# In[14]:
+
+
+sns.regplot(np.log(summary_data.total_count), summary_data.semantic_change)
+plt.ylabel('Semantic change')
+plt.xlabel('Log frequency')
+
+
+# In[15]:
+
+
+scipy.stats.pearsonr(np.log(summary_data.total_count), summary_data.semantic_change)
 

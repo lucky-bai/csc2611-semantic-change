@@ -94,6 +94,8 @@ combined_df = pd.merge(summary_data, concreteness_df, how='inner', on='char')
 
 
 sns.regplot(combined_df.noun_ratio, combined_df.concreteness)
+plt.ylabel('Concreteness')
+plt.xlabel('Noun ratio')
 
 
 # In[10]:
