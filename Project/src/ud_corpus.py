@@ -20,8 +20,10 @@ class POSCorpus(object):
     pass
 
   @classmethod
-  def create_from_ud(cls, data_file_list):
-    """Initialize corpus from a path to a file in conllu format"""
+  def create_from_ud(cls, data_file_list, split_chars=True):
+    """Initialize corpus from a path to a file in conllu format
+    split_chars: if true, split up multisyllabic words into characters.
+    """
     corpus = POSCorpus()
     corpus.sentences = []
 
@@ -35,10 +37,12 @@ class POSCorpus(object):
         for token in token_list:
           pos = token['upostag']
           word = token['form']
-          # Assume words are monosyllabic so split up multisyllabic words
-          # Also convert to simplified characters
-          for char in word:
-            sentence.append({'char': chinese_converter.to_simplified(char), 'pos': pos})
+
+          if split_chars:
+            for char in word:
+              sentence.append({'char': chinese_converter.to_simplified(char), 'pos': pos})
+          else:
+            sentence.append({'word': chinese_converter.to_simplified(word), 'pos': pos})
         if len(sentence) > 0:
           corpus.sentences.append(sentence)
 
